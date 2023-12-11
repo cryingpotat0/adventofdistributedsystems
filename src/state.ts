@@ -1,4 +1,5 @@
-import { Language, getTemplate } from "/Users/raghav/Documents/projects/cannon/frontend/lib/main";
+// import { Language, getTemplate } from "/Users/raghav/Documents/projects/cannon/frontend/lib/main";
+import { Language, getTemplate } from "cannon-codeeditor";
 
 export type WeekData = {
   completed: boolean;
