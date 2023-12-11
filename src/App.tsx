@@ -1,4 +1,5 @@
-import { Cannon, Language, noctisLilac } from "/Users/raghav/Documents/projects/cannon/frontend/lib/main";
+// import { Cannon, Language, noctisLilac } from "/Users/raghav/Documents/projects/cannon/frontend/lib/main";
+import { Cannon, Language, noctisLilac } from "cannon-codeeditor";
 import "./App.css";
 import BannerSvg from './assets/only-banner-transformed.svg';
 import GreenDecoration from './assets/green-decoration.svg';
