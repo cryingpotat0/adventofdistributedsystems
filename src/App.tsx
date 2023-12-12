@@ -8,6 +8,8 @@ import GrayDecoration from './assets/gray-decoration.svg';
 import BlueDecoration from './assets/blue-decoration.svg';
 import Snowflake from './assets/snowflake.svg';
 import CannonSvg from './assets/cannon.svg';
+import useWindowSize from 'react-use/lib/useWindowSize'
+import Confetti from 'react-confetti'
 import { useEffect, useState } from "react";
 import { WeekData, FullState, WeekNumber, saveState, defaultState } from "./state";
 
@@ -34,7 +36,7 @@ function WeekTooltips({
 
   return (
     <div className="flex justify-center items-center">
-      <div className="flex flex-wrap bg-[#e9e9ec] gap-4 md:gap-8 p-4 text-center w-fit">
+      <div className="flex flex-wrap bg-[#e9e9ec] gap-8 p-4 text-center w-fit justify-center">
         {weeks.map((week) => {
           const isCompleted = completedWeeks.includes(week);
           const isCurrent = currentWeek === week;
@@ -180,6 +182,17 @@ export default function App({
   const completedWeeks = allWeeks.map((week, index): [WeekData, number] => [week, index]).filter(([week, _]) => {
     return week.completed;
   }).map(([_, index]) => index);
+  const { width, height } = useWindowSize()
+  const [showConfetti, setShowConfetti] = useState(false);
+
+  useEffect(() => {
+    if (showConfetti) {
+      setTimeout(() => {
+        setShowConfetti(false);
+
+      }, 5000);
+    }
+  }, [showConfetti]);
 
   useEffect(() => {
     saveState(doc);
@@ -222,6 +235,15 @@ export default function App({
           disabledWeeks={disabledWeeks}
         />
 
+        {showConfetti && <Confetti
+          width={width}
+          height={height}
+          initialVelocityY={50}
+          gravity={0.1}
+          recycle={false}
+          run={showConfetti}
+          confettiSource={{ x: 0, y: 2 * height / 3, w: width, h: height / 2 }}
+        />}
         <div className="p-5">
           <div className="flex flex-col md:flex-row md:gap-0 w-full">
             <div className="w-full md:w-1/2 h-[70vh] ">
@@ -254,17 +276,19 @@ export default function App({
                       const copyOfCurrentWeekData: WeekData = JSON.parse(JSON.stringify(currentWeekData));
                       copyOfCurrentWeekData.completed = true;
                       copyOfCurrentWeekData.currentOutput = text;
-                      let nextWeek = currentWeek + 1;
-                      if (nextWeek >= 5 || disabledWeeks.includes(nextWeek)) {
-                        nextWeek = currentWeek;
-                      }
+                      // let nextWeek = currentWeek + 1;
+                      // if (nextWeek >= 5 || disabledWeeks.includes(nextWeek)) {
+                      //   nextWeek = currentWeek;
+                      // }
                       setDoc((prevDoc: FullState) => {
                         return {
                           ...prevDoc,
-                          currentWeek: nextWeek as WeekNumber,
+                          // currentWeek: nextWeek as WeekNumber,
                           [currentWeek]: copyOfCurrentWeekData
                         }
                       });
+
+                      setShowConfetti(true);
                     } else if (!text.includes("Everything looks good!") && currentWeekData.completed) {
                       console.log("Not completed week", currentWeek);
                       const copyOfCurrentWeekData: WeekData = JSON.parse(JSON.stringify(currentWeekData));
@@ -282,20 +306,13 @@ export default function App({
               />
             </div>
 
-            {/* FlyUrl Component */}
-            <div className="hidden md:block md:w-1/2">
+            <div className="block md:w-1/2">
               <FlyUrl flyUrl={currentWeekData.flyUrl} />
-            </div>
-
-            {/* Button for Small Screens */}
-            <div className="block md:hidden text-center mt-5">
-              <ResetButton onClick={onReset} flyUrl={currentWeekData.flyUrl} />
             </div>
           </div>
         </div>
 
-        {/* Reset Button On Large Screens */}
-        <div className="hidden md:block">
+        <div >
           <ResetButton onClick={onReset} />
         </div>
 
