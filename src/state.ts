@@ -22,6 +22,9 @@ export type FullState = {
 }
 
 const { initialFiles, initialOutput } = getTemplate(Language.MaelstromGo);
+const initialFilesWithoutCode = JSON.parse(JSON.stringify(initialFiles));
+initialFilesWithoutCode["main.go"] = "";
+
 export const defaultState: FullState = {
   currentWeek: 0,
   0: {
@@ -37,7 +40,7 @@ export const defaultState: FullState = {
   },
   1: {
     completed: false,
-    currentCode: {},
+    currentCode: initialFilesWithoutCode,
     currentOutput: initialOutput || "",
     flyUrl: "https://fly.io/dist-sys/2/",
     command: [
@@ -48,7 +51,7 @@ export const defaultState: FullState = {
   },
   2: {
     completed: false,
-    currentCode: {},
+    currentCode: initialFilesWithoutCode,
     currentOutput: initialOutput || "",
     flyUrl: "https://fly.io/dist-sys/3a/",
     command: [
@@ -59,7 +62,7 @@ export const defaultState: FullState = {
   },
   3: {
     completed: false,
-    currentCode: {},
+    currentCode: initialFilesWithoutCode,
     currentOutput: initialOutput || "",
     flyUrl: "https://fly.io/dist-sys/4/",
     command: [
@@ -70,7 +73,7 @@ export const defaultState: FullState = {
   },
   4: {
     completed: false,
-    currentCode: {},
+    currentCode: initialFilesWithoutCode,
     currentOutput: initialOutput || "",
     flyUrl: "https://fly.io/dist-sys/5a/",
     command: [
@@ -81,7 +84,7 @@ export const defaultState: FullState = {
   },
   5: {
     completed: false,
-    currentCode: {},
+    currentCode: initialFilesWithoutCode,
     currentOutput: initialOutput || "",
     flyUrl: "https://fly.io/dist-sys/6a/",
     command: [
