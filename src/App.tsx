@@ -12,6 +12,7 @@ import useWindowSize from 'react-use/lib/useWindowSize'
 import Confetti from 'react-confetti'
 import { useEffect, useState } from "react";
 import { WeekData, FullState, WeekNumber, saveState, defaultState } from "./state";
+import { GithubCorner, Twitter } from "./Corners";
 
 function WeekTooltips({
   completedWeeks = [0],
@@ -234,6 +235,9 @@ export default function App({
           }}
           disabledWeeks={disabledWeeks}
         />
+
+        <GithubCorner />
+        <Twitter />
 
         {showConfetti && <Confetti
           width={width}
