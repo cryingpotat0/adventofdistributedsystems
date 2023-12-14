@@ -11,37 +11,29 @@ import CannonSvg from './assets/cannon.svg';
 import useWindowSize from 'react-use/lib/useWindowSize'
 import Confetti from 'react-confetti'
 import { useEffect, useState } from "react";
-import { WeekData, FullState, WeekNumber, saveState, defaultState } from "./state";
+import { FullState, saveState, defaultState } from "./state";
 import { GithubCorner, Twitter } from "./Corners";
 
 function WeekTooltips({
-  completedWeeks = [0],
-  currentWeek = 2,
-  onWeekChange,
-  disabledWeeks = [3, 4]
+  state,
+  onChange,
+  disabledAfter,
 }: {
-  completedWeeks?: number[];
-  currentWeek?: number;
-  disabledWeeks?: number[];
-  onWeekChange?: (week: number) => void;
+  state: FullState;
+  disabledAfter: number;
+  onChange: (week: number, part: number) => void;
 }) {
-  const weeks: Array<WeekNumber> = [0, 1, 2, 3, 4, 5];
-  const weekTooltips = [
-    "Week 0",
-    "Week 1",
-    "Week 2",
-    "Week 3",
-    "Week 4",
-    "Week 5",
-  ];
+  const partNames = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'];
 
   return (
     <div className="flex justify-center items-center">
       <div className="flex flex-wrap bg-[#e9e9ec] gap-8 p-4 text-center w-fit justify-center">
-        {weeks.map((week) => {
-          const isCompleted = completedWeeks.includes(week);
-          const isCurrent = currentWeek === week;
-          const isDisabled = disabledWeeks.includes(week);
+        {state.weekData.map((week, i) => {
+          // If any part is incomplete, the week is incomplete.
+          const isCompleted = !week.parts.some((part) => !part.completed);
+
+          const isCurrent = i === state.currentWeek;
+          const isDisabled = i > disabledAfter;
 
           // If it's disabled, its red. If it's the current week, it's blue. 
           // If it's completed, it's green. Colors are all christmassy. 
@@ -63,18 +55,46 @@ function WeekTooltips({
 
 
           return (
-            <button
+            <div
               className={`text-lg ${cssClass} flex flex-col items-center`}
-              key={week}
               style={{
                 fontFamily: 'Typewriter',
               }}
-              onClick={() => onWeekChange?.(week)}
-              disabled={isDisabled}
             >
-              <img src={decoration} className="w-10 h-10" />
-              {weekTooltips[week]}
-            </button>
+              <button
+                key={i}
+                className="flex flex-col items-center"
+                onClick={() => onChange(i, 0)}
+                disabled={isDisabled}
+              >
+                <img src={decoration} className="w-10 h-10" />
+                {week.tooltip}
+              </button>
+              {isCurrent && week.parts.length > 1 && <div className="flex flex-row gap-2">
+                {week.parts.map((part, j) => {
+                  const isCurrentPart = j === state.currentPart;
+                  const isCompletedPart = part.completed;
+                  let cssClass = "text-[#b54d3f]";
+                  if (isCurrentPart) {
+                    cssClass = "text-[#3f5b98]";
+                  } else if (isCompletedPart) {
+                    cssClass = "text-[#274331]";
+                  }
+                  return (
+                    <button
+                      className={`text-md ${cssClass}`}
+                      key={j}
+                      onClick={() => onChange(i, j)}
+                      disabled={isDisabled}
+                    >
+                      {partNames[j]}
+                    </button>
+                  );
+                }
+                )}
+              </div>
+              }
+            </div>
           );
         })}
       </div>
@@ -178,11 +198,9 @@ export default function App({
 }) {
   const [doc, setDoc] = useState<FullState>(initialState);
   const currentWeek = doc.currentWeek;
-  const currentWeekData = doc[doc.currentWeek];
-  const allWeeks = [doc[0], doc[1], doc[2], doc[3], doc[4]];
-  const completedWeeks = allWeeks.map((week, index): [WeekData, number] => [week, index]).filter(([week, _]) => {
-    return week.completed;
-  }).map(([_, index]) => index);
+  const currentPart = doc.currentPart;
+  const currentData = doc.weekData[currentWeek].parts[currentPart];
+
   const { width, height } = useWindowSize()
   const [showConfetti, setShowConfetti] = useState(false);
 
@@ -200,12 +218,14 @@ export default function App({
   }, [doc]);
 
   // Poor-man's deep copy since we don't want to keep re-rendering Cannon.
-  const disabledWeeks = [3, 4, 5];
   const onReset = () => {
     setDoc(defaultState);
     // Reload page. This is a hack to get Cannon to reset.
     window.location.reload();
   }
+
+  // const runnerUrl = 'https://cryingpotat0--cannon-runners-run-dev.modal.run';
+  const runnerUrl = 'https://cryingpotat0--cannon-runners-run.modal.run';
 
   return (
     <div
@@ -222,18 +242,17 @@ export default function App({
           </h1>
         </div>
         <WeekTooltips
-          completedWeeks={completedWeeks}
-          currentWeek={currentWeek}
-          onWeekChange={(week) => {
-            console.log("Setting week to", week);
+          state={doc}
+          onChange={(weekNum, partNum) => {
             setDoc((prevDoc: FullState) => {
               return {
                 ...prevDoc,
-                currentWeek: week as WeekNumber
+                currentWeek: weekNum,
+                currentPart: partNum,
               }
             })
           }}
-          disabledWeeks={disabledWeeks}
+          disabledAfter={7}
         />
 
         <GithubCorner />
@@ -255,54 +274,41 @@ export default function App({
                 // ... all your Cannon props
                 languageProps={{
                   language: Language.MaelstromGo,
-                  runnerUrl: 'https://cryingpotat0--cannon-runners-run.modal.run',
-                  command: currentWeekData.command.join(" && "),
+                  runnerUrl,
+                  command: currentData.command.join(" && "),
                 }}
-                key={currentWeek}
-                initialFiles={currentWeekData.currentCode}
-                initialOutput={currentWeekData.currentOutput}
+                key={`${currentWeek}-${currentPart}`}
+                initialFiles={currentData.currentCode}
+                initialOutput={currentData.currentOutput}
                 editorTheme={noctisLilac}
                 viewerTheme={noctisLilac}
                 onEditorUpdate={({ currentTab, update }) => {
-                  const copyOfCurrentWeekData: WeekData = JSON.parse(JSON.stringify(currentWeekData));
-                  copyOfCurrentWeekData.currentCode[currentTab] = update.view.state.doc.toString();
-                  setDoc((prevDoc: FullState) => {
-                    return {
-                      ...prevDoc,
-                      [currentWeek]: copyOfCurrentWeekData
-                    }
+                  setDoc(prevDoc => {
+                    const copyOfDoc: FullState = { ...prevDoc };
+                    copyOfDoc.weekData[currentWeek].parts[currentPart].currentCode[currentTab] = update.view.state.doc.toString();
+                    return copyOfDoc;
                   });
                 }}
                 terminalConfig={{
                   onTerminalUpdate: ({ text }) => {
-                    if (text.includes("Everything looks good!") && !currentWeekData.completed) {
+                    if (text.includes("Everything looks good!") && !currentData.completed) {
                       console.log("Completed week", currentWeek);
-                      const copyOfCurrentWeekData: WeekData = JSON.parse(JSON.stringify(currentWeekData));
-                      copyOfCurrentWeekData.completed = true;
-                      copyOfCurrentWeekData.currentOutput = text;
-                      // let nextWeek = currentWeek + 1;
-                      // if (nextWeek >= 5 || disabledWeeks.includes(nextWeek)) {
-                      //   nextWeek = currentWeek;
-                      // }
-                      setDoc((prevDoc: FullState) => {
-                        return {
-                          ...prevDoc,
-                          // currentWeek: nextWeek as WeekNumber,
-                          [currentWeek]: copyOfCurrentWeekData
-                        }
+
+                      setDoc(prevDoc => {
+                        const copyOfDoc: FullState = { ...prevDoc };
+                        copyOfDoc.weekData[currentWeek].parts[currentPart].completed = true;
+                        copyOfDoc.weekData[currentWeek].parts[currentPart].currentOutput = text;
+                        return copyOfDoc;
                       });
 
                       setShowConfetti(true);
-                    } else if (!text.includes("Everything looks good!") && currentWeekData.completed) {
+                    } else if (!text.includes("Everything looks good!") && currentData.completed) {
                       console.log("Not completed week", currentWeek);
-                      const copyOfCurrentWeekData: WeekData = JSON.parse(JSON.stringify(currentWeekData));
-                      copyOfCurrentWeekData.completed = false;
-                      copyOfCurrentWeekData.currentOutput = text;
-                      setDoc((prevDoc: FullState) => {
-                        return {
-                          ...prevDoc,
-                          [currentWeek]: copyOfCurrentWeekData
-                        }
+                      setDoc(prevDoc => {
+                        const copyOfDoc: FullState = { ...prevDoc };
+                        copyOfDoc.weekData[currentWeek].parts[currentPart].completed = false;
+                        copyOfDoc.weekData[currentWeek].parts[currentPart].currentOutput = text;
+                        return copyOfDoc;
                       });
                     }
                   }
@@ -311,7 +317,7 @@ export default function App({
             </div>
 
             <div className="block md:w-1/2">
-              <FlyUrl flyUrl={currentWeekData.flyUrl} />
+              <FlyUrl flyUrl={currentData.flyUrl} />
             </div>
           </div>
         </div>
