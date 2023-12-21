@@ -236,6 +236,7 @@ export default function App({
           <h1 className="text-5xl text-black p-4 "
             style={{
               fontFamily: 'Typewriter',
+              textShadow: '0px 0 2px #fff, 0px 0px 15px #b9402f',
             }}
           >
             Advent of Distributed Systems
